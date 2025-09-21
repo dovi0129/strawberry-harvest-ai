@@ -45,7 +45,7 @@ strawberry\_robot\_project/
    ```bash
    cd controller/comms
    python mid_to_move_jetson.py
-````
+
 
 * Socket server opens at `127.0.0.1:9999`
 * Receives JSON (mid/left/right/angle) from detection
