@@ -32,11 +32,6 @@ config = rs.config()
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 
-
-
-
-
-
 # -------------------- 센서 설정 --------------------
 ctx = rs.context()
 device = ctx.query_devices()[0]  # 첫 번째 연결된 장치 사용

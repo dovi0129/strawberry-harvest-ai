@@ -12,17 +12,28 @@ from util.extract_centerline_and_picking_points import extract_centerline_and_pi
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# -------------------- 경로 설정 --------------------
+import os, sys
+print("[BOOT] __file__:", __file__)
+print("[BOOT] CWD     :", os.getcwd())
+
+# 2) BASE_DIR 기반 절대경로 강제
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(BASE_DIR, 'dl', 'yolov5n'))
 sys.path.insert(0, os.path.join(BASE_DIR, 'dl', 'MobileNetV3_UNet'))
+
+yolo_model_path = os.path.join(BASE_DIR, 'dl', 'yolov5n', 'best.pt')
+seg_model_path  = os.path.join(BASE_DIR, 'dl', 'MobileNetV3_UNet', 'checkpoints', 'best_model.pth')
+
+# 3) 존재 체크 + 경로 출력
+assert os.path.exists(yolo_model_path), f"YOLO weight not found: {yolo_model_path}"
+assert os.path.exists(seg_model_path),  f"Seg weight not found: {seg_model_path}"
+print("[PATH] YOLO:", yolo_model_path)
+print("[PATH] SEG :", seg_model_path)
 
 from dl.MobileNetV3_UNet.seg_infer import load_segmentation_model, infer_segmentation_on_crop
 from dl.yolov5n.yolov5_infer import YOLOv5nInfer
 
 # -------------------- 모델 및 장치 초기화 --------------------
-yolo_model_path = 'dl/yolov5n/best.pt'
-seg_model_path = 'dl/MobileNetV3_UNet/checkpoints/best_model.pth'
 DEVICE = 'cuda'
 
 print("[INFO] 모델 로딩 중...")
