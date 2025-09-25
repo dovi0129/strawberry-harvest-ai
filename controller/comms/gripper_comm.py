@@ -119,3 +119,65 @@ class GripperController:
             finally:
                 self.portHandler.closePort()
                 self.connected = False
+
+# --- 아래 내용을 gripper_comm.py 맨 아래에 추가하세요 ---
+import atexit
+import os
+
+# 환경변수로 기본값 덮어쓰기(원하면 사용)
+_DXL_DEV   = os.getenv("DXL_DEVICE", "/dev/ttyUSB0")
+_DXL_BAUD  = int(os.getenv("DXL_BAUD", "1000000"))
+_DXL_ID    = int(os.getenv("DXL_ID", "15"))
+
+# lazy singleton
+_GRIPPER: Optional[GripperController] = None
+
+def _get_gripper() -> GripperController:
+    global _GRIPPER
+    if _GRIPPER is None:
+        # 필요하면 프로파일 속도나 포트 이름을 여기서 바꿔주세요
+        _GRIPPER = GripperController(
+            device_name=_DXL_DEV,
+            baudrate=_DXL_BAUD,
+            motor_id=_DXL_ID,
+            profile_velocity=50,
+        )
+    return _GRIPPER
+
+def gripper_open(block: bool = False, tol: int = 10, timeout: float = 1.0) -> None:
+    """모듈 레벨 오픈 API (mid_to_move_jetson.py에서 바로 호출 가능)"""
+    g = _get_gripper()
+    g.open()
+    if block:
+        _wait_until_reached(g, g.OPEN_POSITION, tol=tol, timeout=timeout)
+
+def gripper_close(block: bool = False, tol: int = 10, timeout: float = 1.0) -> None:
+    """모듈 레벨 클로즈 API"""
+    g = _get_gripper()
+    g.close()
+    if block:
+        _wait_until_reached(g, g.CLOSE_POSITION, tol=tol, timeout=timeout)
+
+def _wait_until_reached(g: GripperController, goal: int, tol: int = 10, timeout: float = 1.0) -> None:
+    """원하면 블로킹 동작으로 목표 각도까지 기다림(옵션)"""
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        try:
+            pos = g.get_current_position()
+            if abs(pos - goal) <= tol:
+                return
+        except Exception:
+            break
+        time.sleep(0.02)
+
+def _shutdown():
+    global _GRIPPER
+    try:
+        if _GRIPPER is not None:
+            _GRIPPER.disconnect()
+    except Exception:
+        pass
+    _GRIPPER = None
+
+atexit.register(_shutdown)
+# --- 추가 끝 ---
